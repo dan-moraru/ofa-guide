@@ -39,7 +39,19 @@ class InGame extends AppWindow {
   }
 
   public async run() {
+    // play around here
     const gameClassId = await this.getCurrentGameClassId();
+
+    // User input form stuff
+    const userForm = document.getElementById('user-form') as HTMLFormElement;
+    const logSection = document.getElementById('eventsLog');
+    userForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(userForm);
+
+      this.logLine(logSection, formData.get('user-input'), true);
+    });
 
     const gameFeatures = kGamesFeatures.get(gameClassId);
 
@@ -108,7 +120,7 @@ class InGame extends AppWindow {
     OWHotkeys.onHotkeyDown(kHotkeys.toggle, toggleInGameWindow);
   }
 
-  // Appends a new line to the specified log
+  // Appends a new line to the specified log - html, play around here
   private logLine(log: HTMLElement, data, highlight) {
     const line = document.createElement('pre');
     line.textContent = JSON.stringify(data);
