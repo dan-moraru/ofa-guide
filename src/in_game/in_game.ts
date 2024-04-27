@@ -7,7 +7,14 @@ import {
 import { AppWindow } from "../AppWindow";
 import { kHotkeys, kWindowNames, kGamesFeatures } from "../consts";
 
+import * as dotenv from 'dotenv';
+dotenv.config();
+import OpenAI from 'openai';
+
 import WindowState = overwolf.windows.WindowStateEx;
+
+// OpenAI key
+const AIKey = process.env.OPENAI_KEY
 
 // The window displayed in-game while a game is running.
 // It listens to all info events and to the game events listed in the consts.ts file
@@ -50,7 +57,8 @@ class InGame extends AppWindow {
 
       const formData = new FormData(userForm);
 
-      this.logLine(logSection, formData.get('user-input'), true);
+      this.aiStuff();
+      //this.logLine(logSection, formData.get('user-input'), true);
     });
 
     const gameFeatures = kGamesFeatures.get(gameClassId);
@@ -65,6 +73,24 @@ class InGame extends AppWindow {
       );
 
       this._gameEventsListener.start();
+    }
+  }
+
+  private async aiStuff() {
+    const logSection = document.getElementById('eventsLog');
+
+    const openai = new OpenAI({
+      apiKey: AIKey,
+    });
+
+    const stream = await openai.chat.completions.create({
+      messages: [{ role: 'user', content: 'Say this is a test' }],
+      model: 'gpt-3.5-turbo',
+      stream: true,
+    });
+
+    for await (const chunk of stream) {
+      this.logLine(logSection, chunk.choices[0]?.delta?.content || '', true);
     }
   }
 
