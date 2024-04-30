@@ -7,14 +7,16 @@ import {
 import { AppWindow } from "../AppWindow";
 import { kHotkeys, kWindowNames, kGamesFeatures } from "../consts";
 
-import * as dotenv from 'dotenv';
-dotenv.config();
 import OpenAI from 'openai';
 
-import WindowState = overwolf.windows.WindowStateEx;
+// import * as dotenv from "dotenv";
+// dotenv.config({ path: __dirname+'/.env' });
+// const isDevelopment = process.env["NODE_ENV"] as string !== 'production'
+
+import WindowState = overwolf.windows.enums.WindowStateEx;
 
 // OpenAI key
-const AIKey = process.env.OPENAI_KEY
+//const AIKey = 'sk-proj-HhRsvzpjsLPHlS2bmoasT3BlbkFJzImlJ7evlQ7kVcXA6scD'; //|| process.env["OPENAI_KEY"] as string;
 
 // The window displayed in-game while a game is running.
 // It listens to all info events and to the game events listed in the consts.ts file
@@ -46,17 +48,16 @@ class InGame extends AppWindow {
   }
 
   public async run() {
-    // play around here
     const gameClassId = await this.getCurrentGameClassId();
 
-    // User input form stuff
+    // User input form
     const userForm = document.getElementById('user-form') as HTMLFormElement;
     const logSection = document.getElementById('eventsLog');
     userForm.addEventListener('submit', (e) => {
       e.preventDefault();
 
       const formData = new FormData(userForm);
-
+  
       this.aiStuff();
       //this.logLine(logSection, formData.get('user-input'), true);
     });
@@ -80,17 +81,20 @@ class InGame extends AppWindow {
     const logSection = document.getElementById('eventsLog');
 
     const openai = new OpenAI({
-      apiKey: AIKey,
+      apiKey: "sk-proj-HhRsvzpjsLPHlS2bmoasT3BlbkFJzImlJ7evlQ7kVcXA6scD", dangerouslyAllowBrowser: true
     });
 
-    const stream = await openai.chat.completions.create({
-      messages: [{ role: 'user', content: 'Say this is a test' }],
-      model: 'gpt-3.5-turbo',
-      stream: true,
-    });
+    try {
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-3.5-turbo',
+        messages: [{ role: 'user', content: "say a funny joke" }],
+      });
 
-    for await (const chunk of stream) {
-      this.logLine(logSection, chunk.choices[0]?.delta?.content || '', true);
+      console.log("in the ai");
+
+      this.logLine(logSection, completion.choices[0].message.content, true);
+    } catch (error) {
+      console.error('Error:', error);
     }
   }
 
@@ -134,11 +138,11 @@ class InGame extends AppWindow {
       console.log(`pressed hotkey for ${hotkeyResult.name}`);
       const inGameState = await this.getWindowState();
 
-      if (inGameState.window_state === WindowState.NORMAL ||
-        inGameState.window_state === WindowState.MAXIMIZED) {
+      if (inGameState.window_state === WindowState.normal ||
+        inGameState.window_state === WindowState.maximized) {
         this.currWindow.minimize();
-      } else if (inGameState.window_state === WindowState.MINIMIZED ||
-        inGameState.window_state === WindowState.CLOSED) {
+      } else if (inGameState.window_state === WindowState.minimized ||
+        inGameState.window_state === WindowState.closed) {
         this.currWindow.restore();
       }
     }
