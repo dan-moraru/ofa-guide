@@ -7,10 +7,6 @@ import {
 import { AppWindow } from "../AppWindow";
 import { kHotkeys, kWindowNames, kGamesFeatures } from "../consts";
 
-// import * as dotenv from "dotenv";
-// dotenv.config({ path: __dirname+'/.env' });
-// const isDevelopment = process.env["NODE_ENV"] as string !== 'production'
-
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
 
 import WindowState = overwolf.windows.enums.WindowStateEx;
@@ -47,6 +43,8 @@ class InGame extends AppWindow {
   public async run() {
     const gameClassId = await this.getCurrentGameClassId();
 
+    const logSection = document.getElementById('eventsLog');
+
     // User input form
     const userForm = document.getElementById('user-form') as HTMLFormElement;
     userForm.addEventListener('submit', (e) => {
@@ -54,7 +52,11 @@ class InGame extends AppWindow {
 
       const formData = new FormData(userForm);
   
-      this.aiCall(formData.get('user-input'))
+      //this.aiCall(formData.get('user-input'))
+
+      //example: `/.netlify/functions/fetch-weather?lat=${lat}&long=${long}`
+      fetch(`/.netlify/functions/gemini?prompt=${formData.get('user-input')}`)
+        .then(res => { this.logLine(logSection, res.json(), true) });
     });
 
     const gameFeatures = kGamesFeatures.get(gameClassId);
@@ -72,73 +74,74 @@ class InGame extends AppWindow {
     }
   }
 
-  private async aiCall(prompt) {
-    const logSection = document.getElementById('eventsLog');
+  // private async aiCall(prompt) {
+  //   const logSection = document.getElementById('eventsLog');
     
-    const generationConfig = {
-      temperature: 1,
-      topK: 0,
-      topP: 0.95,
-      maxOutputTokens: 8192,
-    };
+  //   const generationConfig = {
+  //     temperature: 1,
+  //     topK: 0,
+  //     topP: 0.95,
+  //     maxOutputTokens: 8192,
+  //   };
 
-    const safetySettings = [
-      {
-        category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-        threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-      },
-      {
-        category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-        threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-      },
-      {
-        category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-        threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-      },
-      {
-        category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-        threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-      },
-    ];
+  //   const safetySettings = [
+  //     {
+  //       category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+  //       threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+  //     },
+  //     {
+  //       category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+  //       threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+  //     },
+  //     {
+  //       category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+  //       threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+  //     },
+  //     {
+  //       category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+  //       threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+  //     },
+  //   ];
 
-    //da ting: AIzaSyA5sVO3S7ASTE8p6s6Lkh8XJYA9Ervqpgs
-    const genAI = new GoogleGenerativeAI("AIzaSyA5sVO3S7ASTE8p6s6Lkh8XJYA9Ervqpgs");
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+  //   const genAI = new GoogleGenerativeAI("key");
+  //   const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
-    const chat = model.startChat({
-      generationConfig,
-      safetySettings,
-      history: [
-        {
-          role: "user",
-          parts: [{ text: "Hello, I am a Warframe player" }],
-        },
-        {
-          role: "model",
-          parts: [{ text: "Hey, what would you like to know?" }],
-        },
-      ],
-    });
+  //   const chat = model.startChat({
+  //     generationConfig,
+  //     safetySettings,
+  //     history: [
+  //       {
+  //         role: "user",
+  //         parts: [{ text: "Hello, I am a Warframe player" }],
+  //       },
+  //       {
+  //         role: "model",
+  //         parts: [{ text: "Hey, what would you like to know?" }],
+  //       },
+  //     ],
+  //   });
 
-    /*const history = await chat.getHistory();
-    const msgContent = { role: "user", parts: [{ text: msg }] };
-    const contents = [...history, msgContent];
-    const { totalTokens } = await model.countTokens({ contents });*/  
+  //   /*const history = await chat.getHistory();
+  //   const msgContent = { role: "user", parts: [{ text: msg }] };
+  //   const contents = [...history, msgContent];
+  //   const { totalTokens } = await model.countTokens({ contents });*/  
   
-    //const result = await model.sendMessage(prompt) for single send
-    const result = await chat.sendMessage(prompt);
-    const response = await result.response;
-    const text = response.text();
+  //   //const result = await model.sendMessage(prompt) for single send
+  //   const result = await chat.sendMessage(prompt);
+  //   const response = await result.response;
+  //   const text = response.text();
 
-    this.logLine(logSection, text, true);
-  }
+  //   this.logLine(logSection, text, true);
+  // }
 
   private onInfoUpdates(info) {
+    //data manipulation here, prob where we will have to find the info
     this.logLine(this._infoLog, info, false);
   }
 
   // Special events will be highlighted in the event log
   private onNewEvents(e) {
+    // prob will never be used...
     const shouldHighlight = e.events.some(event => {
       switch (event.name) {
         case 'kill':

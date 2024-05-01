@@ -13,6 +13,7 @@
   "license": "ISC",
   "dependencies": {
     "@google/generative-ai": "^0.9.0",
+    "@netlify/functions": "^2.6.0",
     "@overwolf/overwolf-api-ts": "^1.3.5",
     "@overwolf/types": "^3.24.7",
     "@types/node": "^20.12.7",
