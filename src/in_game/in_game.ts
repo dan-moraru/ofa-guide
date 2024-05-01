@@ -74,7 +74,8 @@ class InGame extends AppWindow {
     const logSection = document.getElementById('eventsLog');
 
     try {
-      const url = `http://localhost:5000/api?prompt=${prompt}`;
+      //const url = `http://localhost:5000/api?prompt=${prompt}`;
+      const url = `https://ofa-server-r6sh.onrender.com/api?prompt=${prompt}`;
 
       const response: AxiosResponse = await axios.post(url, null, {
         headers: {
