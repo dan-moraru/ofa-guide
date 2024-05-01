@@ -43,6 +43,8 @@ class InGame extends AppWindow {
   public async run() {
     const gameClassId = await this.getCurrentGameClassId();
 
+    const logSection = document.getElementById('eventsLog');
+
     // User input form
     const userForm = document.getElementById('user-form') as HTMLFormElement;
     userForm.addEventListener('submit', (e) => {
@@ -88,11 +90,13 @@ class InGame extends AppWindow {
   }
 
   private onInfoUpdates(info) {
+    //data manipulation here, prob where we will have to find the info
     this.logLine(this._infoLog, info, false);
   }
 
   // Special events will be highlighted in the event log
   private onNewEvents(e) {
+    // prob will never be used...
     const shouldHighlight = e.events.some(event => {
       switch (event.name) {
         case 'kill':
