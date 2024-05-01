@@ -7,11 +7,7 @@ import {
 import { AppWindow } from "../AppWindow";
 import { kHotkeys, kWindowNames, kGamesFeatures } from "../consts";
 
-// import * as dotenv from "dotenv";
-// dotenv.config({ path: __dirname+'/.env' });
-// const isDevelopment = process.env["NODE_ENV"] as string !== 'production'
-
-import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
+import axios, { AxiosResponse } from 'axios';
 
 import WindowState = overwolf.windows.enums.WindowStateEx;
 
@@ -74,63 +70,21 @@ class InGame extends AppWindow {
 
   private async aiCall(prompt) {
     const logSection = document.getElementById('eventsLog');
-    
-    const generationConfig = {
-      temperature: 1,
-      topK: 0,
-      topP: 0.95,
-      maxOutputTokens: 8192,
-    };
 
-    const safetySettings = [
-      {
-        category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-        threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-      },
-      {
-        category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-        threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-      },
-      {
-        category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-        threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-      },
-      {
-        category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-        threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-      },
-    ];
+    try {
+      const url = `http://localhost:5000/api?prompt=${prompt}`;
 
-    //da ting: AIzaSyA5sVO3S7ASTE8p6s6Lkh8XJYA9Ervqpgs
-    const genAI = new GoogleGenerativeAI("AIzaSyA5sVO3S7ASTE8p6s6Lkh8XJYA9Ervqpgs");
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+      const response: AxiosResponse = await axios.post(url, null, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
 
-    const chat = model.startChat({
-      generationConfig,
-      safetySettings,
-      history: [
-        {
-          role: "user",
-          parts: [{ text: "Hello, I am a Warframe player" }],
-        },
-        {
-          role: "model",
-          parts: [{ text: "Hey, what would you like to know?" }],
-        },
-      ],
-    });
-
-    /*const history = await chat.getHistory();
-    const msgContent = { role: "user", parts: [{ text: msg }] };
-    const contents = [...history, msgContent];
-    const { totalTokens } = await model.countTokens({ contents });*/  
-  
-    //const result = await model.sendMessage(prompt) for single send
-    const result = await chat.sendMessage(prompt);
-    const response = await result.response;
-    const text = response.text();
-
-    this.logLine(logSection, text, true);
+      const text = response.data;
+      this.logLine(logSection, text, true);
+    } catch (error) {
+      this.logLine(logSection, error, true);
+    }
   }
 
   private onInfoUpdates(info) {
