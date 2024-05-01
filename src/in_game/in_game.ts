@@ -7,16 +7,13 @@ import {
 import { AppWindow } from "../AppWindow";
 import { kHotkeys, kWindowNames, kGamesFeatures } from "../consts";
 
-import OpenAI from 'openai';
-
 // import * as dotenv from "dotenv";
 // dotenv.config({ path: __dirname+'/.env' });
 // const isDevelopment = process.env["NODE_ENV"] as string !== 'production'
 
-import WindowState = overwolf.windows.enums.WindowStateEx;
+import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
 
-// OpenAI key
-//const AIKey = 'sk-proj-HhRsvzpjsLPHlS2bmoasT3BlbkFJzImlJ7evlQ7kVcXA6scD'; //|| process.env["OPENAI_KEY"] as string;
+import WindowState = overwolf.windows.enums.WindowStateEx;
 
 // The window displayed in-game while a game is running.
 // It listens to all info events and to the game events listed in the consts.ts file
@@ -52,14 +49,12 @@ class InGame extends AppWindow {
 
     // User input form
     const userForm = document.getElementById('user-form') as HTMLFormElement;
-    const logSection = document.getElementById('eventsLog');
     userForm.addEventListener('submit', (e) => {
       e.preventDefault();
 
       const formData = new FormData(userForm);
   
-      this.aiStuff();
-      //this.logLine(logSection, formData.get('user-input'), true);
+      this.aiCall(formData.get('user-input'))
     });
 
     const gameFeatures = kGamesFeatures.get(gameClassId);
@@ -77,25 +72,65 @@ class InGame extends AppWindow {
     }
   }
 
-  private async aiStuff() {
+  private async aiCall(prompt) {
     const logSection = document.getElementById('eventsLog');
+    
+    const generationConfig = {
+      temperature: 1,
+      topK: 0,
+      topP: 0.95,
+      maxOutputTokens: 8192,
+    };
 
-    const openai = new OpenAI({
-      apiKey: "sk-proj-HhRsvzpjsLPHlS2bmoasT3BlbkFJzImlJ7evlQ7kVcXA6scD", dangerouslyAllowBrowser: true
+    const safetySettings = [
+      {
+        category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+        threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+      },
+      {
+        category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+        threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+      },
+      {
+        category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+        threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+      },
+      {
+        category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+        threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+      },
+    ];
+
+    //da ting: AIzaSyA5sVO3S7ASTE8p6s6Lkh8XJYA9Ervqpgs
+    const genAI = new GoogleGenerativeAI("AIzaSyA5sVO3S7ASTE8p6s6Lkh8XJYA9Ervqpgs");
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+
+    const chat = model.startChat({
+      generationConfig,
+      safetySettings,
+      history: [
+        {
+          role: "user",
+          parts: [{ text: "Hello, I am a Warframe player" }],
+        },
+        {
+          role: "model",
+          parts: [{ text: "Hey, what would you like to know?" }],
+        },
+      ],
     });
 
-    try {
-      const completion = await openai.chat.completions.create({
-        model: 'gpt-3.5-turbo',
-        messages: [{ role: 'user', content: "say a funny joke" }],
-      });
+    /*const history = await chat.getHistory();
+    const msgContent = { role: "user", parts: [{ text: msg }] };
+    const contents = [...history, msgContent];
+    const { totalTokens } = await model.countTokens({ contents });*/  
+  
+    //const result = await model.sendMessage(prompt) for single send
+    const result = await chat.sendMessage(prompt);
+    const response = await result.response;
+    const text = response.text();
 
-      console.log("in the ai");
-
-      this.logLine(logSection, completion.choices[0].message.content, true);
-    } catch (error) {
-      console.error('Error:', error);
-    }
+    this.logLine(logSection, text, true);
   }
 
   private onInfoUpdates(info) {
