@@ -5,7 +5,7 @@ import {
 } from "@overwolf/overwolf-api-ts";
 
 import { AppWindow } from "../AppWindow";
-import { kHotkeys, kWindowNames, kGamesFeatures } from "../consts";
+import { kHotkeys, kWindowNames, kGamesFeatures, kGameNames } from "../consts";
 
 import axios, { AxiosResponse } from 'axios';
 
@@ -42,19 +42,8 @@ class InGame extends AppWindow {
 
   public async run() {
     const gameClassId = await this.getCurrentGameClassId();
-
-    const logSection = document.getElementById('eventsLog');
-
-    // User input form
-    const userForm = document.getElementById('user-form') as HTMLFormElement;
-    userForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-
-      const formData = new FormData(userForm);
-  
-      this.aiCall(formData.get('user-input'))
-    });
-
+    // send game name down below
+    const gameName = kGameNames.get(gameClassId);
     const gameFeatures = kGamesFeatures.get(gameClassId);
 
     if (gameFeatures && gameFeatures.length) {
@@ -65,14 +54,21 @@ class InGame extends AppWindow {
         },
         gameFeatures
       );
-
       this._gameEventsListener.start();
     }
+
+    // User input form
+    const userForm = document.getElementById('user-form') as HTMLFormElement;
+    userForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(userForm);
+  
+      this.aiCall(formData.get('user-input'));
+    });
   }
 
   private async aiCall(prompt) {
-    const logSection = document.getElementById('eventsLog');
-
     try {
       //const url = `http://localhost:5000/api?prompt=${prompt}`;
       const url = `https://ofa-server-r6sh.onrender.com/api?prompt=${prompt}`;
@@ -84,15 +80,19 @@ class InGame extends AppWindow {
       });
 
       const text = response.data;
-      this.logLine(logSection, text, true);
+      this.logLine(this._eventsLog, text, true);
     } catch (error) {
-      this.logLine(logSection, error, true);
+      this.logLine(this._eventsLog, error, true);
     }
   }
 
   private onInfoUpdates(info) {
-    //data manipulation here, prob where we will have to find the info
     this.logLine(this._infoLog, info, false);
+
+    console.log(info);
+    if ('game_info' in info){
+      //send username: console.log(info.game_info.username);
+    }
   }
 
   // Special events will be highlighted in the event log

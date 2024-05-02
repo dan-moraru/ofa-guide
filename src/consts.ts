@@ -245,3 +245,76 @@ export const kWindowNames = {
 export const kHotkeys = {
   toggle: 'sample_app_ts_showhide'
 };
+
+export const kGameNames = new Map<number, string>([
+  // Fortnite
+  [
+    21216,
+    'Fortnite'
+  ],
+  // CSGO
+  [
+    7764,
+    'CSGO'
+  ],
+  // League of Legends
+  [
+    5426,
+    'League of Legends'
+  ],
+  // Escape From Tarkov
+  [
+    21634,
+    'Escape From Tarkov'
+  ],
+  // Minecraft
+  [
+    8032,
+    'Minecraft'
+  ],
+  // Overwatch
+  [
+    10844,
+    'Overwatch'
+  ],
+  // PUBG
+  [
+    10906,
+    'PUBG'
+  ],
+  // Rainbow Six Siege
+  [
+    10826,
+    'Rainbow Six Siege'
+  ],
+  // Splitgate: Arena Warfare
+  [
+    21404,
+    'Splitgate: Arena Warfare'
+  ],
+  // Path of Exile
+  [
+    7212,
+    'Path of Exile'
+  ],
+  // Valorant
+  [
+    21640,
+    'Valorant'
+  ],
+  // Dota 2
+  [
+    7314,
+    'Dota 2'
+  ],
+  // Call of Duty: Warzone
+  [
+    21626,
+    'Call of Duty: Warzone'
+  ],
+  // Warframe
+  [
+    8954,
+    'Warframe'
+  ],
+]);
