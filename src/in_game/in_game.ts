@@ -21,6 +21,8 @@ class InGame extends AppWindow {
   private _gameEventsListener: OWGamesEvents;
   private _eventsLog: HTMLElement;
   private _infoLog: HTMLElement;
+  private _gameName: string;
+  private _playerName: string;
 
   private constructor() {
     super(kWindowNames.inGame);
@@ -42,8 +44,7 @@ class InGame extends AppWindow {
 
   public async run() {
     const gameClassId = await this.getCurrentGameClassId();
-    // send game name down below
-    const gameName = kGameNames.get(gameClassId);
+    this._gameName = kGameNames.get(gameClassId);
     const gameFeatures = kGamesFeatures.get(gameClassId);
 
     if (gameFeatures && gameFeatures.length) {
@@ -70,10 +71,10 @@ class InGame extends AppWindow {
 
   private async aiCall(prompt) {
     try {
-      //const url = `http://localhost:5000/api?prompt=${prompt}`;
-      const url = `https://ofa-server-r6sh.onrender.com/api?prompt=${prompt}`;
+      const url = `http://localhost:5000/ofa/${this._gameName}/${this._playerName}?prompt=${prompt}`;
+      //const url = `https://ofa-server-r6sh.onrender.com/ofa/${this._gameName}/${this._playerName}?prompt=${prompt}`;
 
-      const response: AxiosResponse = await axios.post(url, null, {
+      const response: AxiosResponse = await axios.post(url, {}, {
         headers: {
           'Content-Type': 'application/json'
         }
@@ -87,17 +88,19 @@ class InGame extends AppWindow {
   }
 
   private onInfoUpdates(info) {
-    this.logLine(this._infoLog, info, false);
-
-    console.log(info);
     if ('game_info' in info){
-      //send username: console.log(info.game_info.username);
+      this._playerName = info.game_info.username;
     }
+
+    this.logLine(this._infoLog, info, false);
+    console.log(info);
+
+
   }
 
   // Special events will be highlighted in the event log
   private onNewEvents(e) {
-    // prob will never be used...
+    // Prob will never be used...
     const shouldHighlight = e.events.some(event => {
       switch (event.name) {
         case 'kill':
