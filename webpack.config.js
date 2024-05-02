@@ -22,7 +22,19 @@ module.exports = env => ({
         ]
     },
     resolve: {
-        extensions: ['.ts', '.js']
+        extensions: ['.ts', '.js'],
+        fallback: {
+            "fs": false,
+            "tls": false,
+            "net": false,
+            "path": false,
+            "zlib": false,
+            "http": false,
+            "https": false,
+            "stream": false,
+            "crypto": false,
+            "os": false 
+        }
     },
     output: {
       path: path.resolve(__dirname, 'dist/'),

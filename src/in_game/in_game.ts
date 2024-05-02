@@ -7,7 +7,9 @@ import {
 import { AppWindow } from "../AppWindow";
 import { kHotkeys, kWindowNames, kGamesFeatures } from "../consts";
 
-import WindowState = overwolf.windows.WindowStateEx;
+import axios, { AxiosResponse } from 'axios';
+
+import WindowState = overwolf.windows.enums.WindowStateEx;
 
 // The window displayed in-game while a game is running.
 // It listens to all info events and to the game events listed in the consts.ts file
@@ -39,18 +41,18 @@ class InGame extends AppWindow {
   }
 
   public async run() {
-    // play around here
     const gameClassId = await this.getCurrentGameClassId();
 
-    // User input form stuff
-    const userForm = document.getElementById('user-form') as HTMLFormElement;
     const logSection = document.getElementById('eventsLog');
+
+    // User input form
+    const userForm = document.getElementById('user-form') as HTMLFormElement;
     userForm.addEventListener('submit', (e) => {
       e.preventDefault();
 
       const formData = new FormData(userForm);
-
-      this.logLine(logSection, formData.get('user-input'), true);
+  
+      this.aiCall(formData.get('user-input'))
     });
 
     const gameFeatures = kGamesFeatures.get(gameClassId);
@@ -68,12 +70,34 @@ class InGame extends AppWindow {
     }
   }
 
+  private async aiCall(prompt) {
+    const logSection = document.getElementById('eventsLog');
+
+    try {
+      //const url = `http://localhost:5000/api?prompt=${prompt}`;
+      const url = `https://ofa-server-r6sh.onrender.com/api?prompt=${prompt}`;
+
+      const response: AxiosResponse = await axios.post(url, null, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const text = response.data;
+      this.logLine(logSection, text, true);
+    } catch (error) {
+      this.logLine(logSection, error, true);
+    }
+  }
+
   private onInfoUpdates(info) {
+    //data manipulation here, prob where we will have to find the info
     this.logLine(this._infoLog, info, false);
   }
 
   // Special events will be highlighted in the event log
   private onNewEvents(e) {
+    // prob will never be used...
     const shouldHighlight = e.events.some(event => {
       switch (event.name) {
         case 'kill':
@@ -108,11 +132,11 @@ class InGame extends AppWindow {
       console.log(`pressed hotkey for ${hotkeyResult.name}`);
       const inGameState = await this.getWindowState();
 
-      if (inGameState.window_state === WindowState.NORMAL ||
-        inGameState.window_state === WindowState.MAXIMIZED) {
+      if (inGameState.window_state === WindowState.normal ||
+        inGameState.window_state === WindowState.maximized) {
         this.currWindow.minimize();
-      } else if (inGameState.window_state === WindowState.MINIMIZED ||
-        inGameState.window_state === WindowState.CLOSED) {
+      } else if (inGameState.window_state === WindowState.minimized ||
+        inGameState.window_state === WindowState.closed) {
         this.currWindow.restore();
       }
     }
