@@ -88,14 +88,24 @@ class InGame extends AppWindow {
   }
 
   private onInfoUpdates(info) {
-    if ('game_info' in info){
-      this._playerName = info.game_info.username;
-    }
+    switch (this._gameName){
+      case "Warframe": {
+        if ('game_info' in info){
+          this._playerName = info.game_info.username;
+        }
 
+        
+
+        break;
+      }
+      default: {
+        // Do stuff
+        break;
+      }
+    }
+    
     this.logLine(this._infoLog, info, false);
     console.log(info);
-
-
   }
 
   // Special events will be highlighted in the event log
