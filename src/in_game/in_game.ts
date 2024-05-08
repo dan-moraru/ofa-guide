@@ -94,7 +94,23 @@ class InGame extends AppWindow {
           this._playerName = info.game_info.username;
         }
 
-        
+        if ('match_info' in info){
+          const invData = info.match_info;
+          if ('inventory' in invData){
+            const invString = invData.inventory;
+            let inventoryJSON: any;
+
+            try {
+              inventoryJSON = JSON.parse(invString);
+            } catch (error) {
+                console.error('Error parsing JSON:', error);
+            }
+            const platinumNum = inventoryJSON.PremiumCredits;
+            console.log(platinumNum);
+            this.logLine(this._eventsLog, platinumNum, true);
+          }
+
+        }
 
         break;
       }
