@@ -5,7 +5,7 @@ import {
 } from "@overwolf/overwolf-api-ts";
 
 import { AppWindow } from "../AppWindow";
-import { kHotkeys, kWindowNames, kGamesFeatures } from "../consts";
+import { kHotkeys, kWindowNames, kGamesFeatures, kGameNames } from "../consts";
 
 import axios, { AxiosResponse } from 'axios';
 
@@ -21,6 +21,8 @@ class InGame extends AppWindow {
   private _gameEventsListener: OWGamesEvents;
   private _eventsLog: HTMLElement;
   private _infoLog: HTMLElement;
+  private _gameName: string;
+  private _playerName: string;
 
   private constructor() {
     super(kWindowNames.inGame);
@@ -42,19 +44,7 @@ class InGame extends AppWindow {
 
   public async run() {
     const gameClassId = await this.getCurrentGameClassId();
-
-    const logSection = document.getElementById('eventsLog');
-
-    // User input form
-    const userForm = document.getElementById('user-form') as HTMLFormElement;
-    userForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-
-      const formData = new FormData(userForm);
-  
-      this.aiCall(formData.get('user-input'))
-    });
-
+    this._gameName = kGameNames.get(gameClassId);
     const gameFeatures = kGamesFeatures.get(gameClassId);
 
     if (gameFeatures && gameFeatures.length) {
@@ -65,39 +55,79 @@ class InGame extends AppWindow {
         },
         gameFeatures
       );
-
       this._gameEventsListener.start();
     }
+
+    // User input form
+    const userForm = document.getElementById('user-form') as HTMLFormElement;
+    userForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(userForm);
+  
+      this.aiCall(formData.get('user-input'));
+    });
   }
 
   private async aiCall(prompt) {
-    const logSection = document.getElementById('eventsLog');
-
     try {
-      //const url = `http://localhost:5000/api?prompt=${prompt}`;
-      const url = `https://ofa-server-r6sh.onrender.com/api?prompt=${prompt}`;
+      const url = `http://localhost:5000/ofa/${this._gameName}/${this._playerName}?prompt=${prompt}`;
+      //const url = `https://ofa-server-r6sh.onrender.com/ofa/${this._gameName}/${this._playerName}?prompt=${prompt}`;
 
-      const response: AxiosResponse = await axios.post(url, null, {
+      const response: AxiosResponse = await axios.post(url, {}, {
         headers: {
           'Content-Type': 'application/json'
         }
       });
 
       const text = response.data;
-      this.logLine(logSection, text, true);
+      this.logLine(this._eventsLog, text, true);
     } catch (error) {
-      this.logLine(logSection, error, true);
+      this.logLine(this._eventsLog, error, true);
     }
   }
 
   private onInfoUpdates(info) {
-    //data manipulation here, prob where we will have to find the info
+    switch (this._gameName){
+      case "Warframe": {
+        if ('game_info' in info){
+          this._playerName = info.game_info.username;
+        }
+
+        if ('match_info' in info){
+          const invData = info.match_info;
+          if ('inventory' in invData){
+            const invString = invData.inventory;
+            let inventoryJSON: any;
+
+            try {
+              inventoryJSON = JSON.parse(invString);
+            } catch (error) {
+                //TODO better error handling here
+                console.error('Error parsing JSON:', error);
+            }
+            const platinumNum = inventoryJSON.PremiumCredits;
+            console.log(platinumNum);
+            this.logLine(this._eventsLog, platinumNum, true);
+          }
+
+        }
+
+        break;
+      }
+      default: {
+        // Do stuff
+        break;
+      }
+    }
+    
     this.logLine(this._infoLog, info, false);
+    console.log(info);
   }
 
   // Special events will be highlighted in the event log
   private onNewEvents(e) {
-    // prob will never be used...
+    // Prob will never be used...
     const shouldHighlight = e.events.some(event => {
       switch (event.name) {
         case 'kill':
