@@ -103,6 +103,7 @@ class InGame extends AppWindow {
             try {
               inventoryJSON = JSON.parse(invString);
             } catch (error) {
+                //TODO better error handling here
                 console.error('Error parsing JSON:', error);
             }
             const platinumNum = inventoryJSON.PremiumCredits;
