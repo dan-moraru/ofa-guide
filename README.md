@@ -6,3 +6,4 @@ One-for-all Guide. Created by gamers, for gamers.
 
 - Dan Moraru
 - Andrei Lisneuski
+- Jordan Yeh
