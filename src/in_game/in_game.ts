@@ -23,6 +23,7 @@ class InGame extends AppWindow {
   private _infoLog: HTMLElement;
   private _gameName: string;
   private _playerName: string;
+  private _proxyServerUrl: string;
 
   private constructor() {
     super(kWindowNames.inGame);
@@ -32,6 +33,9 @@ class InGame extends AppWindow {
 
     this.setToggleHotkeyBehavior();
     this.setToggleHotkeyText();
+
+    this._proxyServerUrl = "http://localhost:5000";
+    //this._proxyServerUrl = "https://ofa-server-r6sh.onrender.com";
   }
 
   public static instance() {
@@ -60,19 +64,50 @@ class InGame extends AppWindow {
 
     // User input form
     const userForm = document.getElementById('user-form') as HTMLFormElement;
-    userForm.addEventListener('submit', (e) => {
+    userForm.addEventListener('submit', async (e) => {
       e.preventDefault();
 
       const formData = new FormData(userForm);
   
-      this.aiCall(formData.get('user-input'));
+      await this.aiCall(formData.get('user-input'));
     });
+  }
+  
+  private async updateServerStatus(){
+    try {
+      const url = `${this._proxyServerUrl}/health`;
+
+      const response: AxiosResponse = await axios.get(url);
+      const status = response.data;
+
+      if (status.message === "OK") {
+        const message = document.getElementById("server-message");
+        message.textContent = "Server 🟢";
+      }
+    } catch (error) {
+      //TODO better error handling here
+      this.logLine(this._eventsLog, error, true);
+    }
+  }
+
+  private async sendContextData(context){
+    try {
+      const url = `${this._proxyServerUrl}/ofa/context`;
+
+      await axios.post(url, context, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+    } catch (error) {
+      //TODO better error handling here
+      this.logLine(this._eventsLog, error, true);
+    }
   }
 
   private async aiCall(prompt) {
     try {
-      const url = `http://localhost:5000/ofa/${this._gameName}/${this._playerName}?prompt=${prompt}`;
-      //const url = `https://ofa-server-r6sh.onrender.com/ofa/${this._gameName}/${this._playerName}?prompt=${prompt}`;
+      const url = `${this._proxyServerUrl}/ofa/${this._gameName}/${this._playerName}?prompt=${prompt}`;
 
       const response: AxiosResponse = await axios.post(url, {}, {
         headers: {
@@ -83,11 +118,17 @@ class InGame extends AppWindow {
       const text = response.data;
       this.logLine(this._eventsLog, text, true);
     } catch (error) {
+      //TODO better error handling here
       this.logLine(this._eventsLog, error, true);
     }
   }
 
-  private onInfoUpdates(info) {
+  private async onInfoUpdates(info) {
+
+    if ('gep_internal' in info){
+      await this.updateServerStatus();
+    }
+
     switch (this._gameName){
       case "Warframe": {
         if ('game_info' in info){
@@ -106,11 +147,15 @@ class InGame extends AppWindow {
                 //TODO better error handling here
                 console.error('Error parsing JSON:', error);
             }
-            const platinumNum = inventoryJSON.PremiumCredits;
-            console.log(platinumNum);
-            this.logLine(this._eventsLog, platinumNum, true);
-          }
 
+            const priorityData = {
+              platinum: inventoryJSON.PremiumCredits,
+            };
+            
+            console.log(priorityData);
+            
+            await this.sendContextData(priorityData);
+          }
         }
 
         break;
