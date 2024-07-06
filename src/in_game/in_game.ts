@@ -7,6 +7,7 @@ import {
 import { AppWindow } from "../AppWindow";
 import { kHotkeys, kWindowNames, kGamesFeatures, kGameNames } from "../consts";
 
+import { formatResponse } from "../utils";
 import axios, { AxiosResponse } from 'axios';
 
 import WindowState = overwolf.windows.enums.WindowStateEx;
@@ -23,6 +24,7 @@ class InGame extends AppWindow {
   private _infoLog: HTMLElement;
   private _gameName: string;
   private _playerName: string;
+  private _proxyServerUrl: string;
 
   private constructor() {
     super(kWindowNames.inGame);
@@ -32,6 +34,9 @@ class InGame extends AppWindow {
 
     this.setToggleHotkeyBehavior();
     this.setToggleHotkeyText();
+
+    this._proxyServerUrl = "http://localhost:5000";
+    //this._proxyServerUrl = "https://ofa-server-r6sh.onrender.com";
   }
 
   public static instance() {
@@ -43,6 +48,8 @@ class InGame extends AppWindow {
   }
 
   public async run() {
+    
+
     const gameClassId = await this.getCurrentGameClassId();
     this._gameName = kGameNames.get(gameClassId);
     const gameFeatures = kGamesFeatures.get(gameClassId);
@@ -60,34 +67,93 @@ class InGame extends AppWindow {
 
     // User input form
     const userForm = document.getElementById('user-form') as HTMLFormElement;
-    userForm.addEventListener('submit', (e) => {
+    userForm.addEventListener('submit', async (e) => {
       e.preventDefault();
 
       const formData = new FormData(userForm);
   
-      this.aiCall(formData.get('user-input'));
+      await this.aiCall(formData.get('user-input'));
     });
+  }
+  
+  private async updateServerStatus(){
+    const statusMsg = document.getElementById("server-message");
+    const userInput = document.getElementById("user-input");
+    const userButton = document.getElementById("user-button");
+
+    try {
+      const url = `${this._proxyServerUrl}/health`;
+
+      const response: AxiosResponse = await axios.get(url);
+      const status = response.data;
+
+      if (status.message === "OK") {
+        statusMsg.textContent = "Server 🟢";
+        if (userInput.hasAttribute('readonly')) {
+          userInput.removeAttribute('readonly');
+        }
+
+        if (userButton.hasAttribute('disabled')) {
+          userButton.removeAttribute('disabled');
+        }
+      }
+    } catch (error) {
+      statusMsg.textContent = "Server 🔴";
+      if (!userInput.hasAttribute('readonly')) {
+        userInput.setAttribute('readonly', 'readonly');
+      }
+
+      if (!userButton.hasAttribute('disabled')) {
+        userButton.setAttribute('disabled', 'disabled');
+      }
+    }
+  }
+
+  private async sendContextData(context){
+    try {
+      sessionStorage.setItem('context', JSON.stringify(context));
+    } catch (error) {
+      //TODO better error handling here
+      this.logLine(this._eventsLog, error, true);
+    }
   }
 
   private async aiCall(prompt) {
     try {
-      const url = `http://localhost:5000/ofa/${this._gameName}/${this._playerName}?prompt=${prompt}`;
-      //const url = `https://ofa-server-r6sh.onrender.com/ofa/${this._gameName}/${this._playerName}?prompt=${prompt}`;
+      const url = `${this._proxyServerUrl}/ofa/${this._gameName}/${this._playerName}?prompt=${prompt}`;
 
-      const response: AxiosResponse = await axios.post(url, {}, {
+      let contextData = null;
+      if (sessionStorage.getItem('context') !== null){
+        contextData = JSON.parse(sessionStorage.getItem('context'));
+      }
+
+      const response: AxiosResponse = await axios.post(url, contextData, {
         headers: {
           'Content-Type': 'application/json'
         }
       });
 
       const text = response.data;
-      this.logLine(this._eventsLog, text, true);
+      const newText = formatResponse(text);
+
+      this.logLine(this._eventsLog, newText, true);
     } catch (error) {
+      //TODO better error handling here
       this.logLine(this._eventsLog, error, true);
     }
   }
 
-  private onInfoUpdates(info) {
+  private async onInfoUpdates(info) {
+
+    if ('gep_internal' in info){
+      await this.updateServerStatus();
+
+      // Ping server every 14 mins to keep server alive
+      setInterval(async () => {
+        await this.updateServerStatus();
+      }, 840000);
+    }
+
     switch (this._gameName){
       case "Warframe": {
         if ('game_info' in info){
@@ -106,11 +172,23 @@ class InGame extends AppWindow {
                 //TODO better error handling here
                 console.error('Error parsing JSON:', error);
             }
-            const platinumNum = inventoryJSON.PremiumCredits;
-            console.log(platinumNum);
-            this.logLine(this._eventsLog, platinumNum, true);
-          }
 
+            // Different object after mission
+            if ('InventoryJson' in inventoryJSON){
+              const missionData = inventoryJSON.InventoryJson;
+              console.log("mission creds: " + missionData.MissionCredits);
+            }
+
+            // TODO: add more data to be sent everytime ai makes request
+            const priorityData = {
+              platinum: inventoryJSON.PremiumCredits,
+              pending_recipes: inventoryJSON.PendingRecipes,
+            };
+            
+            console.log(priorityData);
+            
+            await this.sendContextData(priorityData);
+          }
         }
 
         break;
@@ -127,7 +205,7 @@ class InGame extends AppWindow {
 
   // Special events will be highlighted in the event log
   private onNewEvents(e) {
-    // Prob will never be used...
+    // Prob will never be used for now...
     const shouldHighlight = e.events.some(event => {
       switch (event.name) {
         case 'kill':

@@ -243,7 +243,7 @@ export const kWindowNames = {
 };
 
 export const kHotkeys = {
-  toggle: 'sample_app_ts_showhide'
+  toggle: 'ofa_guide_showhide'
 };
 
 export const kGameNames = new Map<number, string>([
