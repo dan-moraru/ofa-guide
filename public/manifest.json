@@ -2,11 +2,11 @@
   "manifest_version": 1,
   "type": "WebApp",
   "meta": {
-    "name": "Sample App",
+    "name": "Sample - TS",
     "author": "Overwolf",
     "version": "3.0.3",
     "minimum-overwolf-version": "0.160.0",
-    "description": "An example app for developers new to Overwolf",
+    "description": "One for all (OFA) guide helps gamers with inquiries and guides them in their games",
     "dock_button_title": "Sample - TS",
     "icon": "icons/IconMouseOver.png",
     "icon_gray": "icons/IconMouseNormal.png",
@@ -20,7 +20,7 @@
   "data": {
     "start_window": "background",
     "hotkeys": {
-      "sample_app_ts_showhide": {
+      "ofa_guide_showhide": {
         "title": "Show/Hide In-Game Window",
         "action-type": "toggle",
         "default": "Ctrl+F"
@@ -65,7 +65,7 @@
         "file": "in_game.html",
         "in_game_only": true,
         "focus_game_takeover": "ReleaseOnHidden",
-        "focus_game_takeover_release_hotkey": "sample_app_ts_showhide",
+        "focus_game_takeover_release_hotkey": "ofa_guide_showhide",
         "resizable": true,
         "transparent": true,
         "override_on_update": true,

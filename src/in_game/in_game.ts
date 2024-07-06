@@ -111,13 +111,7 @@ class InGame extends AppWindow {
 
   private async sendContextData(context){
     try {
-      const url = `${this._proxyServerUrl}/ofa/context`;
-
-      await axios.post(url, context, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
+      sessionStorage.setItem('context', JSON.stringify(context));
     } catch (error) {
       //TODO better error handling here
       this.logLine(this._eventsLog, error, true);
@@ -128,7 +122,12 @@ class InGame extends AppWindow {
     try {
       const url = `${this._proxyServerUrl}/ofa/${this._gameName}/${this._playerName}?prompt=${prompt}`;
 
-      const response: AxiosResponse = await axios.post(url, {}, {
+      let contextData = null;
+      if (sessionStorage.getItem('context') !== null){
+        contextData = JSON.parse(sessionStorage.getItem('context'));
+      }
+
+      const response: AxiosResponse = await axios.post(url, contextData, {
         headers: {
           'Content-Type': 'application/json'
         }
@@ -180,8 +179,10 @@ class InGame extends AppWindow {
               console.log("mission creds: " + missionData.MissionCredits);
             }
 
+            // TODO: add more data to be sent everytime ai makes request
             const priorityData = {
               platinum: inventoryJSON.PremiumCredits,
+              pending_recipes: inventoryJSON.PendingRecipes,
             };
             
             console.log(priorityData);
