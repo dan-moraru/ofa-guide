@@ -182,10 +182,50 @@ class InGame extends AppWindow {
             // TODO: add more data to be sent everytime ai makes request
             const priorityData = {
               platinum: inventoryJSON.PremiumCredits,
+              credits: inventoryJSON.RegularCredits,
               pending_recipes: inventoryJSON.PendingRecipes,
+              player_level: inventoryJSON.PlayerLevel,
+              active_quest: inventoryJSON.ActiveQuest,
+              last_region_played: inventoryJSON.LastRegionPlayed,
+              has_reset_account: inventoryJSON.HasResetAccount,
+              story_mode_choice: inventoryJSON.StoryModeChoice,
+              played_tutorial: inventoryJSON.PlayedParkourTutorial,
+              settings: inventoryJSON.Settings,
+                 
+              /* Important information but lots of data (more data = slower speed)
+              // Complicated data too = AI having hard time understanding
+              warframes: inventoryJSON.Suits,
+              progress_on_challenges: inventoryJSON.ChallengeProgress,
+              recipes: inventoryJSON.Recipes,
+
+              xp_info: inventoryJSON.XPInfo,
+              missions: inventoryJSON.Missions,
+              resources_inventory: inventoryJSON.MiscItems,
+              mods: inventoryJSON.RawUpgrades,
+              primary_guns: inventoryJSON.LongGuns,
+              */
+              
+              /* Extra information, not sure if needed (more data = slower speed)
+              level_keys: inventoryJSON.LevelKeys,
+              quest_keys: inventoryJSON.QuestKeys,
+              ships: inventoryJSON.Ships,
+              weapon_skins: inventoryJSON.WeaponSkins,
+              focus_ability: inventoryJSON.FocusAbility,
+              focus_upgrades: inventoryJSON.FocusUpgrades,
+              faction_scores: inventoryJSON.FactionScores,
+              periodic_mission_completions: inventoryJSON.PeriodicMissionCompletions,
+              archwing_enabled: inventoryJSON.ArchwingEnabled,
+              archwing_loadout: {
+                archwing_melee_weapon: inventoryJSON.SpaceMelee,
+                archwing_guns: inventoryJSON.SpaceGuns,
+                archwing_suit: inventoryJSON.SpaceSuits,
+              },
+              kubrow_pets: inventoryJSON.KubrowPets,
+              fusion_treasures: inventoryJSON.FusionTreasures,
+              upgrades: inventoryJSON.Upgrades,
+              affiliations: inventoryJSON.Affiliations,
+              */
             };
-            
-            console.log(priorityData);
             
             await this.sendContextData(priorityData);
           }
