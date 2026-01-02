@@ -2,6 +2,6 @@
 
 One-for-all Guide. Created by gamers, for gamers.
 
-## Authors
+## Author
 
 - Dan Moraru
